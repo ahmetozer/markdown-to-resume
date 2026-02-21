@@ -1,0 +1,61 @@
+name: Build & Deploy Resume
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "resume.md"
+      - "resume_to_pdf.py"
+      - "index.html"
+      - "requirements.txt"
+      - ".github/workflows/resume.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip3 install -r requirements.txt
+
+      - name: Generate PDF
+        run: python3 resume_to_pdf.py resume.md public/resume.pdf
+
+      - name: Copy site assets
+        run: |
+          mkdir -p public
+          [ -f index.html ] && cp index.html public/index.html || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: public/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
