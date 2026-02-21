@@ -36,12 +36,10 @@ jobs:
       - name: Install dependencies
         run: pip3 install -r requirements.txt
 
-      - name: Generate PDF
-        run: python3 resume_to_pdf.py resume.md public/resume.pdf
-
-      - name: Copy site assets
+      - name: Build site
         run: |
           mkdir -p public
+          python3 resume_to_pdf.py resume.md public/resume.pdf
           [ -f index.html ] && cp index.html public/index.html || true
 
       - name: Upload Pages artifact
